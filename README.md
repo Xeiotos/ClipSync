@@ -1,6 +1,13 @@
 # ClipSync - Simple One-Way Clipboard Sharing
 
-A simple tool to share clipboard content from a MacBook to a Windows desktop over a local network.
+A simple tool to share clipboard content from a MacBook to a Windows desktop over a local network. Supports both text and files/folders.
+
+## Features
+- Share text from MacBook to Windows
+- Share files and folders from MacBook to Windows
+- Works over local network
+- No installation required (just Python)
+- Automatic file cleanup on Windows
 
 ## Setup
 
@@ -50,15 +57,23 @@ A simple tool to share clipboard content from a MacBook to a Windows desktop ove
    Replace `<windows-ip>` with the IP address shown in the Windows console
 
 ## How it Works
-- The Windows machine runs a server that listens for clipboard content
-- The MacBook runs a client that monitors the clipboard and sends changes to the server
-- When you copy text on the MacBook, it will automatically be copied to the Windows clipboard
-- The client checks for clipboard changes every 500ms
-- Press Ctrl+C on either machine to stop the respective script
+
+### Text Sharing
+- Copy text on MacBook (Cmd+C)
+- The text will automatically be copied to the Windows clipboard
+- Paste on Windows (Ctrl+V)
+
+### File/Folder Sharing
+- Copy files or folders on MacBook (Cmd+C)
+- Files will be automatically transferred to the Windows temp directory
+- The files are stored in `%TEMP%\clipsync` on Windows
+- Previous files are automatically cleaned up when new files are copied
+- You can then copy the files from the temp directory to wherever you want
 
 ## Notes
 - Both machines must be on the same local network
-- This tool only works with text content
 - The Windows machine must have the server running to receive clipboard content
 - The MacBook must have the client running to send clipboard content
-- Always make sure the virtual environment is activated before running the scripts 
+- Always make sure the virtual environment is activated before running the scripts
+- For file sharing, ensure you have sufficient disk space in the Windows temp directory
+- The server automatically cleans up previous files when new ones are copied 
