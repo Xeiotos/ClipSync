@@ -4,6 +4,7 @@ import time
 import sys
 import os
 import base64
+import subprocess
 from pathlib import Path
 
 def send_clipboard(server_url):
@@ -15,16 +16,72 @@ def send_clipboard(server_url):
     
     def get_clipboard_files():
         try:
-            # On macOS, we can get file paths from the clipboard
-            files = pyperclip.paste().split('\n')
-            return [f for f in files if os.path.exists(f) and os.path.isfile(f)]  # Only return files, not directories
-        except:
+            # Check if clipboard has files
+            check_script = '''
+            set cbInfo to (clipboard info) as string
+            if cbInfo contains "«class furl»" then
+                return "has_files"
+            else
+                return "no_files"
+            end if
+            '''
+            
+            check_result = subprocess.run(['osascript', '-e', check_script], capture_output=True, text=True)
+            
+            if check_result.stdout.strip() == "has_files":
+                # Try to get file path directly from pbpaste
+                pbpaste_cmd = ['pbpaste', '-Prefer', 'txt']
+                pbpaste_result = subprocess.run(pbpaste_cmd, capture_output=True, text=True)
+                
+                # If pbpaste returns a file path, use it
+                potential_path = pbpaste_result.stdout.strip()
+                if os.path.exists(potential_path) and os.path.isfile(potential_path):
+                    return [potential_path]
+                
+                # Fallback to AppleScript for file references
+                get_paths_script = '''
+                try
+                    tell application "Finder"
+                        set theClipboard to the clipboard as «class furl»
+                        set filePaths to {}
+                        
+                        if class of theClipboard is list then
+                            repeat with aFile in theClipboard
+                                set the end of filePaths to POSIX path of (aFile as string)
+                            end repeat
+                        else
+                            set the end of filePaths to POSIX path of (theClipboard as string)
+                        end if
+                        
+                        return filePaths
+                    end tell
+                on error errMsg
+                    return "Error: " & errMsg
+                end try
+                '''
+                
+                paths_result = subprocess.run(['osascript', '-e', get_paths_script], capture_output=True, text=True)
+                
+                if paths_result.returncode == 0 and paths_result.stdout.strip():
+                    if "Error:" in paths_result.stdout:
+                        return []
+                        
+                    # Process the paths
+                    paths = paths_result.stdout.strip().split(", ")
+                    valid_files = [f for f in paths if f and os.path.exists(f) and os.path.isfile(f)]
+                    return valid_files
+            
+            return []
+        except Exception as e:
+            print(f"Error getting clipboard files: {e}")
             return []
 
     def read_file_content(file_path):
         try:
+            # Read file content directly
             with open(file_path, 'rb') as f:
-                return base64.b64encode(f.read()).decode('utf-8')
+                content = f.read()
+                return base64.b64encode(content).decode('utf-8')
         except Exception as e:
             print(f"Error reading file {file_path}: {e}")
             return None
@@ -38,6 +95,12 @@ def send_clipboard(server_url):
                 'content': content
             }
         return None
+    
+    def is_file_extension(text):
+        """Check if the text looks like a filename with extension"""
+        text = text.strip().lower()
+        common_extensions = ['.pdf', '.txt', '.doc', '.docx', '.jpg', '.png', '.xls', '.xlsx', '.ppt', '.pptx']
+        return any(text.endswith(ext) for ext in common_extensions)
 
     try:
         while True:
@@ -61,8 +124,8 @@ def send_clipboard(server_url):
                                 print(f"Sent file: {file_data['name']}")
                         except requests.exceptions.RequestException as e:
                             print(f"Error sending file: {e}")
-                elif current_content.strip():
-                    # Send text
+                elif current_content.strip() and not is_file_extension(current_content):
+                    # Only send text if it doesn't look like a filename
                     try:
                         response = requests.post(
                             f"{server_url}/clipboard",

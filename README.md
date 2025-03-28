@@ -9,6 +9,18 @@ A simple tool to share clipboard content from a MacBook to a Windows desktop ove
 - No installation required (just Python)
 - Automatic file cleanup on Windows
 
+## Requirements
+
+### MacBook (Client)
+- Python 3.7 or higher
+- For file support:
+  - macOS (for clipboard file handling)
+  - `osascript` (pre-installed on macOS)
+
+### Windows (Server)
+- Python 3.7 or higher
+- PowerShell (for clipboard operations)
+
 ## Setup
 
 1. Install Python 3.7 or higher on both machines if not already installed
@@ -65,7 +77,8 @@ A simple tool to share clipboard content from a MacBook to a Windows desktop ove
 
 ### File Sharing
 - Copy a single file on MacBook (Cmd+C)
-- The file will be automatically transferred to the Windows temp directory
+- The client uses macOS's clipboard API to get the file reference
+- The file content is read and sent to the Windows server
 - The file is stored in `%TEMP%\clipsync` on Windows
 - The file is automatically copied to the Windows clipboard
 - You can then paste the file wherever you want
@@ -76,4 +89,6 @@ A simple tool to share clipboard content from a MacBook to a Windows desktop ove
 - The MacBook must have the client running to send clipboard content
 - Always make sure the virtual environment is activated before running the scripts
 - Only single files are supported (no directories or multiple files)
-- Previous files are automatically cleaned up when new ones are copied 
+- Previous files are automatically cleaned up when new ones are copied
+- File sharing requires proper permissions and sufficient disk space
+- The Windows firewall may need to be configured to allow incoming connections on port 5000 
