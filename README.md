@@ -1,10 +1,10 @@
 # ClipSync - Simple One-Way Clipboard Sharing
 
-A simple tool to share clipboard content from a MacBook to a Windows desktop over a local network. Supports both text and files/folders.
+A simple tool to share clipboard content from a MacBook to a Windows desktop over a local network. Supports text and single file transfers.
 
 ## Features
 - Share text from MacBook to Windows
-- Share files and folders from MacBook to Windows
+- Share single files from MacBook to Windows
 - Works over local network
 - No installation required (just Python)
 - Automatic file cleanup on Windows
@@ -63,17 +63,17 @@ A simple tool to share clipboard content from a MacBook to a Windows desktop ove
 - The text will automatically be copied to the Windows clipboard
 - Paste on Windows (Ctrl+V)
 
-### File/Folder Sharing
-- Copy files or folders on MacBook (Cmd+C)
-- Files will be automatically transferred to the Windows temp directory
-- The files are stored in `%TEMP%\clipsync` on Windows
-- Previous files are automatically cleaned up when new files are copied
-- You can then copy the files from the temp directory to wherever you want
+### File Sharing
+- Copy a single file on MacBook (Cmd+C)
+- The file will be automatically transferred to the Windows temp directory
+- The file is stored in `%TEMP%\clipsync` on Windows
+- The file is automatically copied to the Windows clipboard
+- You can then paste the file wherever you want
 
 ## Notes
 - Both machines must be on the same local network
 - The Windows machine must have the server running to receive clipboard content
 - The MacBook must have the client running to send clipboard content
 - Always make sure the virtual environment is activated before running the scripts
-- For file sharing, ensure you have sufficient disk space in the Windows temp directory
-- The server automatically cleans up previous files when new ones are copied 
+- Only single files are supported (no directories or multiple files)
+- Previous files are automatically cleaned up when new ones are copied 

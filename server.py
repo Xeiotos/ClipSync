@@ -2,9 +2,9 @@ from flask import Flask, request, send_file
 import pyperclip
 import socket
 import os
-import shutil
 import tempfile
-import json
+import subprocess
+import base64
 
 app = Flask(__name__)
 
@@ -23,6 +23,18 @@ def get_local_ip():
         s.close()
     return ip
 
+def copy_to_clipboard(file_path):
+    """Copy file to Windows clipboard using PowerShell"""
+    try:
+        # Convert path to Windows format
+        win_path = file_path.replace('/', '\\')
+        # Use PowerShell to copy file to clipboard
+        subprocess.run(['powershell', '-Command', f'Set-Clipboard -Path "{win_path}"'], check=True)
+        return True
+    except Exception as e:
+        print(f"Error copying to clipboard: {e}")
+        return False
+
 @app.route('/clipboard', methods=['POST'])
 def receive_clipboard():
     data = request.json
@@ -37,17 +49,16 @@ def receive_clipboard():
             path = os.path.join(TEMP_DIR, item)
             if os.path.isfile(path):
                 os.unlink(path)
-            elif os.path.isdir(path):
-                shutil.rmtree(path)
         
-        # Save new files
-        for file_data in content:
+        # Save new file
+        if content:
+            file_data = content[0]  # Only handle the first file
             file_path = os.path.join(TEMP_DIR, file_data['name'])
-            if file_data.get('is_dir', False):
-                os.makedirs(file_path, exist_ok=True)
-            else:
-                with open(file_path, 'wb') as f:
-                    f.write(file_data['content'].encode('latin1'))
+            with open(file_path, 'wb') as f:
+                f.write(base64.b64decode(file_data['content']))
+            
+            # Copy to clipboard
+            copy_to_clipboard(file_path)
     
     return {'status': 'success'}
 
